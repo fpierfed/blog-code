@@ -101,7 +101,7 @@ if __name__ == '__main__':
     for fname in ('test_sync', 'test_sync_pipe',
                   'async_runner', 'async_runner_uvloop'):
 
-        os.system('/usr/local/bin/redis-cli flushall')
+        os.system(f'/usr/local/bin/redis-cli -h {redis_host} flushall')
 
         t = timeit.Timer(f'{fname}(n, redis_host, redis_port)',
                          globals=globals())
