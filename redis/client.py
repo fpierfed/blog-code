@@ -1,24 +1,43 @@
 #!/usr/bin/env python3
+"""
+Task description format
+
+task: (name, args, uuid)
+
+uuid is only use to connect results to tasks. If the task does not need to
+fetch its results, then uuid can be safely set to None. THe inplication is that
+the task becomes a one-way thing with no garantees of success.
+"""
 import asyncio
+import json
 import os
 from statistics import stdev
 import timeit
+import uuid
 import aioredis
 import uvloop
+
+
+RESULTS = {}
 
 
 async def generate_work(n, taskq, host, port, loop):
     redis = await aioredis.create_redis((host, port), loop=loop)
     for i in range(n):
-        await redis.lpush(taskq, i)
+        task_id = str(uuid.uuid4())
+        RESULTS[task_id] = None
+
+        task_desc = json.dumps(('add', (i, i), task_id))
+        await redis.lpush(taskq, task_desc)
 
 
 async def fetch_results(n, resq, host, port, loop):
     redis = await aioredis.create_redis((host, port), loop=loop)
     received = 0
     while received < n:
-        _, value = await redis.blpop(resq)
-        assert 0 <= int(value) < n
+        _, raw = await redis.blpop(resq)
+        (task_id, value) = json.loads(raw)
+        RESULTS[task_id] = value
         received += 1
 
 

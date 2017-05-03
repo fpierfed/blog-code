@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import json
 import os
 import aioredis
 import uvloop
@@ -34,7 +35,11 @@ class Worker:
             # print('Sending results back')
 
     async def process(self, task_description):
-        return task_description
+        (name, args, task_id) = json.loads(task_description)
+        return json.dumps((task_id, getattr(self, name)(*args)))
+
+    def add(self, x, y):
+        return x + y
 
 
 if __name__ == '__main__':
